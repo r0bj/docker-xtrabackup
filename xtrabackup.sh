@@ -25,7 +25,7 @@ filename="xtrabackup-${timestamp}.gz"
 tmpfile="/$filename"
 date=$(date +'%Y%m%d')
 hostname=$(hostname)
-object="s3://${s3_bucket}/${date}/${hostname}/${filename}"
+object="s3://${s3_bucket}/${hostname}/${date}/${filename}"
 
 write_log "Running xtrabackup"
 
