@@ -1,9 +1,21 @@
-FROM perconalab/percona-xtrabackup:2.4.11
+FROM ubuntu:18.04
+
+ENV XTRABACKUP_VERSION 2.4.14-1.bionic
+ENV S3CMD_VERSION 2.0.2
 
 RUN apt-get update \
-  && apt-get install -y curl python3-pip pigz \
+  && apt-get install -y wget curl lsb-release gnupg pigz python3-setuptools \
+  && wget https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb \
+  && dpkg -i percona-release_latest.$(lsb_release -sc)_all.deb \
+  && rm -f percona-release_latest.$(lsb_release -sc)_all.deb \
+  && apt-get update \
+  && apt-get install -y percona-xtrabackup-24=$XTRABACKUP_VERSION \
   && apt-get clean && rm -rf /var/lib/apt/lists/* \
-  && pip3 install s3cmd
+  && wget https://github.com/s3tools/s3cmd/releases/download/v${S3CMD_VERSION}/s3cmd-${S3CMD_VERSION}.tar.gz \
+  && tar xvpzf s3cmd-${S3CMD_VERSION}.tar.gz \
+  && rm -f s3cmd-${S3CMD_VERSION}.tar.gz \
+  && cd s3cmd-${S3CMD_VERSION} \
+  && python3 setup.py install
 
 COPY xtrabackup.sh /
 COPY backup.sh /

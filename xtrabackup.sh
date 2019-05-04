@@ -9,8 +9,6 @@ s3_bucket=${S3_BUCKET}
 s3_access_key=${S3_ACCESS_KEY}
 s3_secret_key=${S3_SECRET_KEY}
 
-target_dir="/backup"
-
 function write_log {
 	echo "`date +'%Y%m%d %H%M%S'`: $1"
 }
@@ -21,7 +19,7 @@ if [ -z "$mysql_password" ] || [ -z "$s3_bucket" ] || [ -z "$s3_access_key" ] ||
 fi
 
 timestamp=$(date +'%Y%m%d_%H%M%S')
-filename="xtrabackup-${timestamp}.gz"
+filename="xtrabackup-${timestamp}.tar.gz"
 tmpfile="/$filename"
 date=$(date +'%Y%m%d')
 hostname=$(hostname)
@@ -29,9 +27,7 @@ object="s3://${s3_bucket}/${hostname}/${date}/${filename}"
 
 write_log "Running xtrabackup"
 
-mkdir $target_dir
-xtrabackup --host=$mysql_host --user=$mysql_user --password=$mysql_password --backup --target-dir=$target_dir
-tar cpf $tmpfile -I pigz -C $target_dir .
+xtrabackup --host=$mysql_host --user=$mysql_user --password=$mysql_password --backup --stream=tar | pigz - > $tmpfile
 
 write_log "Uploading archive to S3"
 s3cmd --access_key=$s3_access_key --secret_key=$s3_secret_key -m binary/octet-stream put $tmpfile $object
